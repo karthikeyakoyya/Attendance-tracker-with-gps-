@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance Tracker - NIT Durgapur</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css"> </head>
+<body>
+    <div class="container-fluid">
+        <header class="text-center py-4">
+            <h1 class="fw-bold">Smart Attendance Tracker</h1>
+            <p class="lead text-muted">Real-time attendance with geolocation verification</p>
+        </header>
+
+        <div class="row">
+            <div class="col-md-3 sidebar">
+                <div class="user-profile card mb-4">
+                    <div class="card-body text-center">
+                        <img src="https://ui-avatars.com/api/?name=Student&background=0D8ABC&color=fff&size=128" alt="Profile" class="profile-img mb-3">
+                        <h4 id="user-name"></h4> <p id="user-id" class="text-muted"></p> <p id="user-class" class="text-muted">Class: Computer Science</p>
+                    </div>
+                </div>
+
+                <div class="attendance-stats card">
+                    <div class="card-body">
+                        <h5 class="card-title">Attendance Summary</h5>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 85%">85%</div>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Present
+                                <span class="badge bg-primary rounded-pill">42</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Absent
+                                <span class="badge bg-danger rounded-pill">8</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Late
+                                <span class="badge bg-warning rounded-pill">5</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9 main-content">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Mark Today's Attendance</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="verification-methods mb-4">
+                                    <h5>Verification Methods</h5>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button id="camera-btn" class="btn btn-outline-primary">
+                                            <i class="bi bi-camera"></i> Camera
+                                        </button>
+                                        <button id="fingerprint-btn" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#fingerprintModal">
+                                            <i class="bi bi-fingerprint"></i> Fingerprint
+                                        </button>
+                                        <button id="location-btn" class="btn btn-outline-primary">
+                                            <i class="bi bi-geo-alt"></i> Location
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="attendance-form">
+                                    <form id="attendanceForm">
+                                        <div class="mb-3">
+                                            <label for="attendanceDate" class="form-label">Date</label>
+                                            <input type="date" class="form-control" id="attendanceDate" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="attendanceStatus" class="form-label">Status</label>
+                                            <select class="form-select" id="attendanceStatus" required>
+                                                <option value="">Select status</option>
+                                                <option value="present">Present</option>
+                                                <option value="absent">Absent</option>
+                                                <option value="late">Late</option>
+                                                <option value="excused">Excused</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="attendanceNotes" class="form-label">Notes</label>
+                                            <textarea class="form-control" id="attendanceNotes" rows="2"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-check-circle"></i> Submit Attendance
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="verification-results">
+                                    <h5>Verification Results</h5>
+                                    <div class="verification-status mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Camera Verification:</span>
+                                            <span id="camera-status" class="badge bg-secondary">Pending</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Fingerprint Verification:</span>
+                                            <span id="fingerprint-status" class="badge bg-secondary">Pending</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Location Verification:</span>
+                                            <span id="location-status" class="badge bg-secondary">Pending</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="camera-feed mb-3">
+                                        <video id="camera-feed" width="100%" autoplay playsinline style="display: none;"></video>
+                                        <canvas id="photo-canvas" style="display:none;"></canvas>
+                                        <div id="camera-placeholder" class="text-center py-4 bg-light rounded">
+                                            <i class="bi bi-camera" style="font-size: 3rem; color: #6c757d;"></i>
+                                            <p class="mt-2">Camera feed will appear here</p>
+                                        </div>
+                                        <button id="capture-btn" class="btn btn-sm btn-success mt-2 w-100" style="display:none;">
+                                            <i class="bi bi-camera-fill"></i> Capture Photo
+                                        </button>
+                                    </div>
+
+                                    <div class="location-info">
+                                        <div id="map"></div>
+                                        <p id="location-text" class="text-muted">Location not yet verified</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="attendance-history card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">Attendance History</h3>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                                    <i class="bi bi-funnel"></i> Filter
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" data-filter="all">All Records</a></li>
+                                    <li><a class="dropdown-item" href="#" data-filter="present">Present Only</a></li>
+                                    <li><a class="dropdown-item" href="#" data-filter="absent">Absent Only</a></li>
+                                    <li><a class="dropdown-item" href="#" data-filter="late">Late Only</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Check-in Time</th>
+                                        <th>Location</th>
+                                        <th>Verification Method</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceTableBody">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="fingerprintModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Fingerprint Verification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="fingerprint-icon mb-3">
+                        <i class="bi bi-fingerprint" style="font-size: 4rem;"></i>
+                    </div>
+                    <p>Place your finger on the fingerprint scanner</p>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                    </div>
+                    <button id="simulate-fingerprint" class="btn btn-primary">Simulate Scan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="attendanceToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Attendance System</strong>
+                <small>Just now</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message">
+                Attendance recorded successfully!
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
