@@ -22,7 +22,7 @@ The application uses the browser’s Geolocation API to verify the student’s l
 ## 📸 Screenshots
 
 ### ✅ Landing Page
-![Landing Page](landing-page.png)
+![Landing Page](landing page.png)
 
 ### ✅ Attendance Check-in (Geolocation Verified)
 
